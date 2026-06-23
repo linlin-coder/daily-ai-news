@@ -1,0 +1,14 @@
+# 输出文件
+output/
+logs/
+data/
+
+# 环境配置
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
