@@ -1,182 +1,171 @@
 #!/usr/bin/env python3.12
 # -*- coding: UTF-8 -*-
-"""报告生成：中文报告 + 微信公众号HTML（顶级杂志风格）"""
+"""报告生成：中文报告 + 微信公众号HTML（顶级杂志风格 v2）"""
 
 import re
 
 
 def markdown_to_wechat_html(md_content):
     """Markdown → 微信公众号兼容HTML（顶级杂志风格）"""
-    # 提取标题用于 hero 区域
     title_match = re.search(r'^# (.+)', md_content, re.MULTILINE)
     title = title_match.group(1) if title_match else "AI前沿日报"
 
     date_match = re.search(r'\*\*报告日期\*\*:\s*(.+)', md_content)
     date_str = date_match.group(1).strip() if date_match else ""
 
+    source_match = re.search(r'\*\*数据来源\*\*:\s*(.+)', md_content)
+    source_str = source_match.group(1).strip() if source_match else ""
+
     parts = []
 
-    # ===== 全局样式 + CSS动画 =====
+    # ===== CSS动画 =====
     parts.append('''<style>
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.card-hover { transition: all 0.3s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeLeft { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes fadeRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes fade { from { opacity:0; } to { opacity:1; } }
+@keyframes barGrow { from { width:0; } to { width:100%; } }
+@keyframes dotPulse { 0%,100% { box-shadow:0 0 0 0 rgba(58,123,213,0.4); } 50% { box-shadow:0 0 0 6px rgba(58,123,213,0); } }
+@keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+@keyframes gradientBG { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
+@keyframes borderGlow { 0% { border-color:rgba(58,123,213,0.3); } 50% { border-color:rgba(58,123,213,0.6); } 100% { border-color:rgba(58,123,213,0.3); } }
 </style>''')
 
-    # ===== Hero 区域 =====
+    # ===== Hero =====
     parts.append(f'''
-<section style="margin:0;padding:0;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);border-radius:0;overflow:hidden;">
-  <section style="padding:40px 24px 35px;text-align:center;background:linear-gradient(135deg,rgba(15,12,41,0.9),rgba(48,43,99,0.9),rgba(36,36,62,0.9));animation:fadeIn 0.8s ease-out;">
-    <!-- 装饰元素 -->
-    <section style="margin:0 auto 15px;width:60px;height:3px;background:linear-gradient(90deg,#00d2ff,#3a7bd5);border-radius:2px;animation:shimmer 2s infinite;"></section>
-    <section style="font-size:13px;color:rgba(255,255,255,0.6);letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;font-family:monospace;">DAILY AI INTELLIGENCE</section>
-    <section style="font-size:28px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:8px;text-shadow:0 2px 10px rgba(0,0,0,0.3);">{title}</section>
-    <section style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;">{date_str}</section>
-    <!-- 装饰线 -->
-    <section style="width:40px;height:2px;background:linear-gradient(90deg,#00d2ff,#3a7bd5);margin:0 auto;border-radius:1px;"></section>
+<section style="margin:0;padding:0;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);">
+  <section style="padding:44px 24px 38px;text-align:center;">
+    <section style="display:inline-block;padding:4px 14px;background:rgba(255,255,255,0.08);border-radius:20px;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:3px;margin-bottom:16px;">{source_str if source_str else 'last30days · HN · GitHub'}</section>
+    <section style="margin:0 auto 18px;width:50px;height:2px;background:linear-gradient(90deg,#00d2ff,#3a7bd5);border-radius:1px;"></section>
+    <section style="font-size:26px;font-weight:800;color:#fff;line-height:1.35;margin-bottom:10px;">{title}</section>
+    <section style="font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:1px;">{date_str}</section>
+    <section style="margin:20px auto 0;width:30px;height:2px;background:linear-gradient(90deg,#00d2ff,#3a7bd5);border-radius:1px;"></section>
   </section>
 </section>''')
 
     # ===== 解析正文 =====
     lines = md_content.split("\n")
     in_list = False
-    in_section = False
+    in_card = False
     section_index = 0
-    skip_hero = True
+    skip_header = True
+    card_num = 0
+
+    # 渐变色板
+    gradients = [
+        ("linear-gradient(135deg,#667eea,#764ba2)", "#667eea"),
+        ("linear-gradient(135deg,#f093fb,#f5576c)", "#f5576c"),
+        ("linear-gradient(135deg,#4facfe,#00f2fe)", "#4facfe"),
+        ("linear-gradient(135deg,#43e97b,#38f9d7)", "#43e97b"),
+        ("linear-gradient(135deg,#fa709a,#fee140)", "#fa709a"),
+    ]
 
     for line in lines:
         s = line.strip()
 
-        # 跳过已处理的标题
-        if skip_hero:
+        # 跳过头部元信息
+        if skip_header:
             if s.startswith("# ") or s.startswith("**报告日期") or s.startswith("**数据来源") or s == "---" or s == "":
                 continue
-            skip_hero = False
+            skip_header = False
 
+        # 空行
         if not s:
             if in_list:
                 parts.append('</section>')
                 in_list = False
-            if in_section:
-                parts.append('</section>')
-                in_section = False
             continue
 
-        # H2 标题 - 大版块标题
+        # H2 版块标题
         if s.startswith("## "):
-            if in_section:
+            if in_card:
                 parts.append('</section>')
+                in_card = False
             section_index += 1
             text = s[3:]
-            # 渐变色标题条
-            colors = [
-                "linear-gradient(135deg,#667eea,#764ba2)",
-                "linear-gradient(135deg,#f093fb,#f5576c)",
-                "linear-gradient(135deg,#4facfe,#00f2fe)",
-                "linear-gradient(135deg,#43e97b,#38f9d7)",
-                "linear-gradient(135deg,#fa709a,#fee140)",
-            ]
-            color = colors[(section_index - 1) % len(colors)]
+            grad, accent = gradients[(section_index - 1) % len(gradients)]
             parts.append(f'''
-<section style="margin:28px 0 0;padding:0;">
-  <section style="position:relative;padding:16px 20px 14px 55px;background:{color};border-radius:12px 12px 0 0;animation:slideInLeft 0.6s ease-out;">
-    <section style="position:absolute;left:16px;top:50%;transform:translateY(-50%);width:28px;height:28px;background:rgba(255,255,255,0.25);border-radius:50%;text-align:center;line-height:28px;font-size:14px;font-weight:bold;color:#fff;">{section_index}</section>
-    <section style="font-size:19px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.2);">{_fmt(text)}</section>
+<section style="margin:32px 0 0;animation:fadeUp 0.5s ease-out;">
+  <section style="padding:14px 18px;background:{grad};border-radius:10px 10px 0 0;">
+    <section style="display:flex;align-items:center;">
+      <section style="width:26px;height:26px;background:rgba(255,255,255,0.2);border-radius:7px;text-align:center;line-height:26px;font-size:13px;font-weight:bold;color:#fff;margin-right:10px;flex-shrink:0;">{section_index}</section>
+      <section style="font-size:18px;font-weight:700;color:#fff;">{_fmt(text)}</section>
+    </section>
   </section>
-  <section style="background:#fff;padding:20px;border-radius:0 0 12px 12px;box-shadow:0 4px 20px rgba(0,0,0,0.06);animation:fadeInUp 0.6s ease-out 0.2s both;">''')
-            in_section = True
+  <section style="background:#fff;padding:16px 18px;border-radius:0 0 10px 10px;box-shadow:0 6px 24px rgba(0,0,0,0.05);">''')
+            in_card = True
             continue
 
-        # H3 标题 - 子标题（带序号的热点）
+        # H3 热点条目
         if s.startswith("### "):
             text = s[4:]
-            # 判断是否是带数字序号的热点
             num_match = re.match(r'^(\d+)\.\s*(.*)', text)
             if num_match:
                 num = num_match.group(1)
                 title_text = num_match.group(2)
+                card_num += 1
+                # 渐变序号 + 标题同行
                 parts.append(f'''
-<section style="margin:16px 0 12px;padding:14px 16px 14px 58px;background:linear-gradient(135deg,#f8f9ff,#f0f4ff);border-radius:10px;border-left:4px solid #3a7bd5;position:relative;animation:fadeInUp 0.5s ease-out;">
-  <section style="position:absolute;left:14px;top:14px;width:30px;height:30px;background:linear-gradient(135deg,#3a7bd5,#00d2ff);border-radius:8px;text-align:center;line-height:30px;font-size:14px;font-weight:bold;color:#fff;box-shadow:0 2px 8px rgba(58,123,213,0.3);">{num}</section>
-  <section style="font-size:17px;font-weight:700;color:#1a1a1a;line-height:1.4;">{_fmt(title_text)}</section>
-</section>''')
+<section style="margin:14px 0;padding:14px 16px;background:#f8faff;border-radius:10px;border:1px solid #eef2ff;animation:fadeLeft 0.4s ease-out {0.1 * (card_num % 5)}s both;">
+  <section style="display:flex;align-items:flex-start;gap:12px;">
+    <section style="flex-shrink:0;width:32px;height:32px;background:linear-gradient(135deg,#3a7bd5,#00d2ff);border-radius:10px;text-align:center;line-height:32px;font-size:15px;font-weight:bold;color:#fff;box-shadow:0 3px 10px rgba(58,123,213,0.25);animation:dotPulse 2s infinite;">{num}</section>
+    <section style="flex:1;font-size:16px;font-weight:700;color:#1a1a1a;line-height:1.45;padding-top:4px;">{_fmt(title_text)}</section>
+  </section>''')
+                continue
             else:
                 parts.append(f'''
-<section style="margin:16px 0 8px;font-size:16px;font-weight:700;color:#333;padding-left:12px;border-left:3px solid #3a7bd5;">{_fmt(text)}</section>''')
-            continue
+<section style="margin:14px 0 6px;font-size:16px;font-weight:700;color:#333;">{_fmt(text)}</section>''')
+                continue
 
         # 分割线
         if s in ("---", "***"):
-            if in_section:
+            if in_card:
                 parts.append('</section>')
-                in_section = False
-            parts.append('<section style="margin:24px 0;height:1px;background:linear-gradient(90deg,transparent,#e0e0e0,transparent);"></section>')
+                in_card = False
+            parts.append('<section style="margin:28px 0;height:1px;background:linear-gradient(90deg,transparent,#ddd,transparent);"></section>')
             continue
 
         # 列表项
         if s.startswith("- ") or s.startswith("* "):
             if not in_list:
-                parts.append('<section style="margin:8px 0;padding:0;">')
+                parts.append('<section style="margin:8px 0;">')
                 in_list = True
             text = s[2:]
-            # 特殊格式：来源/热度信息
             if any(kw in text for kw in ["来源:", "热度:", "来源：", "热度："]):
+                # 标签式来源信息
                 parts.append(f'''
-<section style="display:flex;align-items:center;margin:6px 0;padding:8px 12px;background:#f8f9fa;border-radius:8px;font-size:13px;color:#666;">
-  <section style="width:4px;height:4px;background:#3a7bd5;border-radius:50%;margin-right:10px;flex-shrink:0;"></section>
-  {_fmt(text)}
-</section>''')
+<section style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:linear-gradient(135deg,#f0f4ff,#e8ecff);border-radius:6px;font-size:12px;color:#5a6a8a;line-height:1.4;">{_fmt(text)}</section>''')
             else:
                 parts.append(f'''
-<section style="margin:5px 0;padding:4px 0 4px 16px;border-left:2px solid #e8ecf3;font-size:15px;color:#444;line-height:1.7;">{_fmt(text)}</section>''')
+<section style="margin:6px 0;padding:6px 0 6px 14px;border-left:2px solid #e0e6f0;font-size:14.5px;color:#555;line-height:1.75;">{_fmt(text)}</section>''')
             continue
 
-        # 引用/斜体
+        # 引用/斜体（编辑观点等）
         if s.startswith("*") and s.endswith("*") and not s.startswith("**"):
             text = s.strip("*")
             parts.append(f'''
-<section style="margin:12px 0;padding:12px 16px;background:linear-gradient(135deg,#fff8f0,#fff);border-left:3px solid #fa709a;border-radius:0 8px 8px 0;font-size:14px;color:#888;font-style:italic;">{text}</section>''')
+<section style="margin:14px 0;padding:14px 16px;background:linear-gradient(135deg,#fff9f0,#fff5f8);border-radius:10px;border-left:3px solid #fa709a;position:relative;">
+  <section style="position:absolute;top:8px;left:12px;font-size:20px;color:rgba(250,112,154,0.2);">❝</section>
+  <section style="font-size:14px;color:#888;font-style:italic;line-height:1.7;padding-left:16px;">{text}</section>
+</section>''')
             continue
 
         # 普通段落
-        parts.append(f'<p style="margin:10px 0;font-size:15px;color:#444;line-height:1.9;text-align:justify;letter-spacing:0.5px;">{_fmt(s)}</p>')
+        parts.append(f'<p style="margin:8px 0;font-size:15px;color:#444;line-height:1.85;text-align:justify;letter-spacing:0.3px;">{_fmt(s)}</p>')
 
-    # 关闭所有打开的标签
+    # 关闭标签
     if in_list:
         parts.append('</section>')
-    if in_section:
+    if in_card:
         parts.append('</section></section>')
 
     # ===== 底部 =====
     parts.append('''
-<section style="margin:30px 0 0;padding:0;">
-  <section style="height:3px;background:linear-gradient(90deg,#3a7bd5,#00d2ff,#3a7bd5);border-radius:2px;margin-bottom:20px;"></section>
-  <section style="text-align:center;padding:20px;background:linear-gradient(135deg,#f8f9ff,#f0f4ff);border-radius:12px;">
-    <section style="font-size:12px;color:#999;letter-spacing:2px;margin-bottom:6px;">POWERED BY last30days ENGINE</section>
-    <section style="font-size:11px;color:#bbb;">数据来源: Hacker News / GitHub · AI 自动综合分析</section>
+<section style="margin:36px 0 0;">
+  <section style="height:2px;background:linear-gradient(90deg,transparent,#3a7bd5,transparent);border-radius:1px;margin-bottom:24px;"></section>
+  <section style="text-align:center;padding:24px 16px;background:linear-gradient(135deg,#f8f9ff,#f0f4ff);border-radius:14px;">
+    <section style="font-size:11px;color:#aaa;letter-spacing:3px;margin-bottom:4px;">LAST30DAYS · DAILY AI INTELLIGENCE</section>
+    <section style="font-size:11px;color:#ccc;">Hacker News · GitHub · AI 自动综合分析</section>
   </section>
 </section>
 </section>''')
@@ -186,15 +175,12 @@ def markdown_to_wechat_html(md_content):
 
 def _fmt(text):
     """行内格式化"""
-    # 粗体 → 渐变高亮
     text = re.sub(
         r'\*\*(.*?)\*\*',
         r'<strong style="color:#1a1a1a;font-weight:700;">\1</strong>',
         text
     )
-    # 链接 → 只保留文字
     text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
-    # 代码 → 标签样式
     text = re.sub(
         r'`([^`]+)`',
         r'<code style="padding:2px 6px;background:#f0f4ff;border-radius:4px;font-size:13px;color:#3a7bd5;font-family:monospace;">\1</code>',
