@@ -76,7 +76,7 @@ def markdown_to_wechat_html(md_content):
                 in_list = False
             continue
 
-        # H2 版块标题
+        # H2 版块标题（独立标题条，不包裹内容）
         if s.startswith("## "):
             if in_card:
                 parts.append('</section>')
@@ -85,18 +85,15 @@ def markdown_to_wechat_html(md_content):
             text = s[3:]
             grad, accent = gradients[(section_index - 1) % len(gradients)]
             parts.append(f'''
-<section style="margin:32px 0 0;animation:fadeUp 0.5s ease-out;">
-  <section style="padding:14px 18px;background:{grad};border-radius:10px 10px 0 0;">
-    <section style="display:flex;align-items:center;">
-      <section style="width:26px;height:26px;background:rgba(255,255,255,0.2);border-radius:7px;text-align:center;line-height:26px;font-size:13px;font-weight:bold;color:#fff;margin-right:10px;flex-shrink:0;">{section_index}</section>
-      <section style="font-size:18px;font-weight:700;color:#fff;">{_fmt(text)}</section>
-    </section>
+<section style="margin:32px 0 12px;padding:14px 18px;background:{grad};border-radius:10px;animation:fadeUp 0.5s ease-out;">
+  <section style="display:flex;align-items:center;">
+    <section style="width:26px;height:26px;background:rgba(255,255,255,0.2);border-radius:7px;text-align:center;line-height:26px;font-size:13px;font-weight:bold;color:#fff;margin-right:10px;flex-shrink:0;">{section_index}</section>
+    <section style="font-size:18px;font-weight:700;color:#fff;">{_fmt(text)}</section>
   </section>
-  <section style="background:#fff;padding:16px 18px;border-radius:0 0 10px 10px;box-shadow:0 6px 24px rgba(0,0,0,0.05);">''')
-            in_card = True
+</section>''')
             continue
 
-        # H3 热点条目
+        # H3 热点条目（独立卡片）
         if s.startswith("### "):
             text = s[4:]
             num_match = re.match(r'^(\d+)\.\s*(.*)', text)
@@ -104,9 +101,8 @@ def markdown_to_wechat_html(md_content):
                 num = num_match.group(1)
                 title_text = num_match.group(2)
                 card_num += 1
-                # 渐变序号 + 标题同行
                 parts.append(f'''
-<section style="margin:14px 0;padding:14px 16px;background:#f8faff;border-radius:10px;border:1px solid #eef2ff;animation:fadeLeft 0.4s ease-out {0.1 * (card_num % 5)}s both;">
+<section style="margin:12px 0;padding:16px;background:#fff;border-radius:10px;border:1px solid #eef2ff;box-shadow:0 4px 16px rgba(0,0,0,0.04);animation:fadeLeft 0.4s ease-out {0.08 * (card_num % 6)}s both;">
   <section style="display:flex;align-items:flex-start;gap:12px;">
     <section style="flex-shrink:0;width:32px;height:32px;background:linear-gradient(135deg,#3a7bd5,#00d2ff);border-radius:10px;text-align:center;line-height:32px;font-size:15px;font-weight:bold;color:#fff;box-shadow:0 3px 10px rgba(58,123,213,0.25);animation:dotPulse 2s infinite;">{num}</section>
     <section style="flex:1;font-size:16px;font-weight:700;color:#1a1a1a;line-height:1.45;padding-top:4px;">{_fmt(title_text)}</section>
