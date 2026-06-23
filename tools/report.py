@@ -46,7 +46,6 @@ def markdown_to_wechat_html(md_content):
     # ===== 解析正文 =====
     lines = md_content.split("\n")
     in_list = False
-    in_card = False
     section_index = 0
     skip_header = True
     card_num = 0
@@ -78,9 +77,6 @@ def markdown_to_wechat_html(md_content):
 
         # H2 版块标题（独立标题条，不包裹内容）
         if s.startswith("## "):
-            if in_card:
-                parts.append('</section>')
-                in_card = False
             section_index += 1
             text = s[3:]
             grad, accent = gradients[(section_index - 1) % len(gradients)]
@@ -106,7 +102,8 @@ def markdown_to_wechat_html(md_content):
   <section style="display:flex;align-items:flex-start;gap:12px;">
     <section style="flex-shrink:0;width:32px;height:32px;background:linear-gradient(135deg,#3a7bd5,#00d2ff);border-radius:10px;text-align:center;line-height:32px;font-size:15px;font-weight:bold;color:#fff;box-shadow:0 3px 10px rgba(58,123,213,0.25);animation:dotPulse 2s infinite;">{num}</section>
     <section style="flex:1;font-size:16px;font-weight:700;color:#1a1a1a;line-height:1.45;padding-top:4px;">{_fmt(title_text)}</section>
-  </section>''')
+  </section>
+</section>''')
                 continue
             else:
                 parts.append(f'''
@@ -115,9 +112,6 @@ def markdown_to_wechat_html(md_content):
 
         # 分割线
         if s in ("---", "***"):
-            if in_card:
-                parts.append('</section>')
-                in_card = False
             parts.append('<section style="margin:28px 0;height:1px;background:linear-gradient(90deg,transparent,#ddd,transparent);"></section>')
             continue
 
@@ -152,8 +146,6 @@ def markdown_to_wechat_html(md_content):
     # 关闭标签
     if in_list:
         parts.append('</section>')
-    if in_card:
-        parts.append('</section></section>')
 
     # ===== 底部 =====
     parts.append('''
@@ -163,7 +155,6 @@ def markdown_to_wechat_html(md_content):
     <section style="font-size:11px;color:#aaa;letter-spacing:3px;margin-bottom:4px;">LAST30DAYS · DAILY AI INTELLIGENCE</section>
     <section style="font-size:11px;color:#ccc;">Hacker News · GitHub · AI 自动综合分析</section>
   </section>
-</section>
 </section>''')
 
     return "\n".join(parts)
