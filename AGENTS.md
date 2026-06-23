@@ -119,9 +119,9 @@ print(f'Cover: {cover_path}')
 "
 ```
 
-### Step 6: 生成数据图表并上传
+### Step 6: 生成数据图表并上传（仅当文章包含数据时）
 
-从报告数据中提取可量化指标，用 matplotlib 生成科学图表：
+从报告正文中提取可量化的数据点（百分比、数值、增长率等），用 matplotlib 以 Nature 标准生成科学图表。
 
 ```bash
 cd /root/RD/daily_skill_notify/daily_ai_news
@@ -139,24 +139,27 @@ today = datetime.now().strftime('%Y-%m-%d')
 with open(f'output/ai-news-{today}.md') as f:
     md = f.read()
 
-# 生成图表（热度排名、来源分布、综合统计）
+# 从文章内容中提取真实数据，有数据才生成图表
 charts = generate_charts(md, 'output')
 
-# 上传到微信，获取正文可用 URL
 chart_images = []
 for path, caption in charts:
     url = wx.upload_image_media(path)
     if url:
         chart_images.append((url, caption))
-        print(f'Uploaded: {caption}')
-print(f'Total charts: {len(chart_images)}')
+        print(f'Chart: {caption}')
+
+if not chart_images:
+    print('No charts (articles are qualitative, no quantitative data)')
 "
 ```
 
-生成的图表包括：
-- **热度排名柱状图**: 各热点话题的 Hacker News 热度对比
-- **来源分布饼图**: 数据来自 HN / GitHub / Web 的比例
-- **综合统计卡片**: 文章数、总热度、评论数、项目数
+**图表规则**：
+- 只提取文章正文中的真实数据（百分比、数值、增长率、准确率等）
+- 不提取元数据（HN分数、评论数、文章来源等）
+- 没有数据就不生成图表，不强制插图
+- 图表自动匹配到对应文章标题下方
+- Nature 风格：Arial 字体、简洁坐标轴、300 DPI
 
 ### Step 7: 生成微信HTML并推送
 

@@ -1,12 +1,29 @@
 #!/bin/bash
-# 每日AI热点新闻 - 由 opencode agent 执行
-cd /root/RD/daily_skill_notify/daily_ai_news
-mkdir -p output
+# 每日AI热点新闻 - 由 opencode agent 驱动
+set -euo pipefail
 
-export LAST30DAYS_MEMORY_DIR="$(pwd)/output"
+PROJECT_DIR="/root/RD/daily_skill_notify/daily_ai_news"
+LOG_DIR="${PROJECT_DIR}/logs"
+TODAY=$(date +%Y-%m-%d)
+LOG_FILE="${LOG_DIR}/${TODAY}.log"
 
-# 使用 opencode run 调用 agent 执行完整流程
-opencode run \
-  "$(cat AGENTS.md)" \
-  --dir "$(pwd)" \
-  2>&1 | tee -a "logs/$(date +%Y-%m-%d).log"
+mkdir -p "${LOG_DIR}" "${PROJECT_DIR}/output"
+
+cd "${PROJECT_DIR}"
+
+exec >> "${LOG_FILE}" 2>&1
+echo "=========================================="
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Daily AI News cron start"
+echo "=========================================="
+
+export LAST30DAYS_MEMORY_DIR="${PROJECT_DIR}/output"
+
+# opencode run 驱动 agent 执行 AGENTS.md 中的完整流程
+opencode run "$(cat AGENTS.md)" --dir "${PROJECT_DIR}"
+
+EXIT_CODE=$?
+if [ $EXIT_CODE -eq 0 ]; then
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Done successfully"
+else
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Failed with exit code $EXIT_CODE"
+fi
