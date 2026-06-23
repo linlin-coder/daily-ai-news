@@ -49,6 +49,8 @@ def markdown_to_wechat_html(md_content, chart_images=None):
     section_index = 0
     skip_header = True
     card_num = 0
+    in_card = False
+    current_h3_title = ''
 
     # 渐变色板
     gradients = [
@@ -66,17 +68,6 @@ def markdown_to_wechat_html(md_content, chart_images=None):
         # 跳过头部元信息
         if skip_header:
             if s.startswith("# ") or s.startswith("**报告日期") or s.startswith("**数据来源") or s == "" or s == "---":
-                if s == "---" and not charts_inserted and chart_images:
-                    skip_header = False
-                    # 插入数据图表
-                    for img_path, caption in chart_images:
-                        parts.append(f'''
-<section style="margin:20px 0;text-align:center;">
-  <img src="{img_path}" style="width:100%;border-radius:8px;" />
-  <section style="font-size:11px;color:#999;margin-top:6px;letter-spacing:0.5px;">{caption}</section>
-</section>''')
-                    charts_inserted = True
-                    continue
                 continue
             skip_header = False
 
@@ -89,6 +80,9 @@ def markdown_to_wechat_html(md_content, chart_images=None):
 
         # H2 版块标题（独立标题条，不包裹内容）
         if s.startswith("## "):
+            if in_card:
+                parts.append('</section>')
+                in_card = False
             section_index += 1
             text = s[3:]
             grad, accent = gradients[(section_index - 1) % len(gradients)]
@@ -109,13 +103,18 @@ def markdown_to_wechat_html(md_content, chart_images=None):
                 num = num_match.group(1)
                 title_text = num_match.group(2)
                 card_num += 1
+                # 关闭上一个卡片（如果有）
+                if in_card:
+                    parts.append('</section>')
+                    in_card = False
                 parts.append(f'''
 <section style="margin:12px 0;padding:16px;background:#fff;border-radius:10px;border:1px solid #eef2ff;box-shadow:0 4px 16px rgba(0,0,0,0.04);animation:fadeLeft 0.4s ease-out {0.08 * (card_num % 6)}s both;">
   <section style="display:flex;align-items:flex-start;gap:12px;">
     <section style="flex-shrink:0;width:32px;height:32px;background:linear-gradient(135deg,#3a7bd5,#00d2ff);border-radius:10px;text-align:center;line-height:32px;font-size:15px;font-weight:bold;color:#fff;box-shadow:0 3px 10px rgba(58,123,213,0.25);animation:dotPulse 2s infinite;">{num}</section>
     <section style="flex:1;font-size:16px;font-weight:700;color:#1a1a1a;line-height:1.45;padding-top:4px;">{_fmt(title_text)}</section>
-  </section>
-</section>''')
+  </section>''')
+                in_card = True
+                current_h3_title = title_text
                 continue
             else:
                 parts.append(f'''
@@ -124,6 +123,22 @@ def markdown_to_wechat_html(md_content, chart_images=None):
 
         # 分割线
         if s in ("---", "***"):
+            if in_card:
+                parts.append('</section>')
+                in_card = False
+            # 检查是否有匹配的图表插入到对应文章后
+            if chart_images and current_h3_title:
+                for img_url, caption in chart_images:
+                    title_kw = current_h3_title[:12]
+                    if title_kw in caption or any(kw in caption for kw in title_kw.split()[:2]):
+                        parts.append(f'''
+<section style="margin:16px 0;text-align:center;">
+  <img src="{img_url}" style="width:100%;max-width:520px;border-radius:6px;" />
+  <section style="font-size:11px;color:#999;margin-top:6px;letter-spacing:0.5px;">{caption}</section>
+</section>''')
+                        chart_images = [(u, c) for u, c in chart_images if u != img_url]
+                        break
+                current_h3_title = ''
             parts.append('<section style="margin:28px 0;height:1px;background:linear-gradient(90deg,transparent,#ddd,transparent);"></section>')
             continue
 
@@ -157,6 +172,8 @@ def markdown_to_wechat_html(md_content, chart_images=None):
 
     # 关闭标签
     if in_list:
+        parts.append('</section>')
+    if in_card:
         parts.append('</section>')
 
     # ===== 底部 =====
