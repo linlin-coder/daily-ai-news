@@ -5,8 +5,8 @@
 import re
 
 
-def markdown_to_wechat_html(md_content):
-    """Markdown → 微信公众号兼容HTML（顶级杂志风格）"""
+def markdown_to_wechat_html(md_content, chart_images=None):
+    """Markdown → 微信公众号兼容HTML（v3: 独立卡片 + 数据图表）"""
     title_match = re.search(r'^# (.+)', md_content, re.MULTILINE)
     title = title_match.group(1) if title_match else "AI前沿日报"
 
@@ -59,12 +59,24 @@ def markdown_to_wechat_html(md_content):
         ("linear-gradient(135deg,#fa709a,#fee140)", "#fa709a"),
     ]
 
+    charts_inserted = False
     for line in lines:
         s = line.strip()
 
         # 跳过头部元信息
         if skip_header:
-            if s.startswith("# ") or s.startswith("**报告日期") or s.startswith("**数据来源") or s == "---" or s == "":
+            if s.startswith("# ") or s.startswith("**报告日期") or s.startswith("**数据来源") or s == "" or s == "---":
+                if s == "---" and not charts_inserted and chart_images:
+                    skip_header = False
+                    # 插入数据图表
+                    for img_path, caption in chart_images:
+                        parts.append(f'''
+<section style="margin:20px 0;text-align:center;">
+  <img src="{img_path}" style="width:100%;border-radius:8px;" />
+  <section style="font-size:11px;color:#999;margin-top:6px;letter-spacing:0.5px;">{caption}</section>
+</section>''')
+                    charts_inserted = True
+                    continue
                 continue
             skip_header = False
 

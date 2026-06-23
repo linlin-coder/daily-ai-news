@@ -119,16 +119,46 @@ print(f'Cover: {cover_path}')
 "
 ```
 
-然后上传封面到微信：
-```python
+### Step 6: 生成数据图表并上传
+
+从报告数据中提取可量化指标，用 matplotlib 生成科学图表：
+
+```bash
+cd /root/RD/daily_skill_notify/daily_ai_news
+python3.12 -c "
+import sys, os; sys.path.insert(0, 'tools')
+from chart import generate_charts
 from config import load_env
 from wechat import WeChatAPI
+from datetime import datetime
+
 load_env()
 wx = WeChatAPI()
-thumb_media_id = wx.upload_thumb_media('output/cover-YYYY-MM-DD.png')
+today = datetime.now().strftime('%Y-%m-%d')
+
+with open(f'output/ai-news-{today}.md') as f:
+    md = f.read()
+
+# 生成图表（热度排名、来源分布、综合统计）
+charts = generate_charts(md, 'output')
+
+# 上传到微信，获取正文可用 URL
+chart_images = []
+for path, caption in charts:
+    url = wx.upload_image_media(path)
+    if url:
+        chart_images.append((url, caption))
+        print(f'Uploaded: {caption}')
+print(f'Total charts: {len(chart_images)}')
+"
 ```
 
-### Step 6: 生成微信HTML并推送
+生成的图表包括：
+- **热度排名柱状图**: 各热点话题的 Hacker News 热度对比
+- **来源分布饼图**: 数据来自 HN / GitHub / Web 的比例
+- **综合统计卡片**: 文章数、总热度、评论数、项目数
+
+### Step 7: 生成微信HTML并推送
 
 ```bash
 cd /root/RD/daily_skill_notify/daily_ai_news
@@ -137,6 +167,7 @@ import sys; sys.path.insert(0, 'tools')
 from config import load_env
 from wechat import WeChatAPI
 from cover import generate_cover
+from chart import generate_charts
 from report import markdown_to_wechat_html
 from datetime import datetime
 
@@ -148,10 +179,20 @@ today = datetime.now().strftime('%Y-%m-%d')
 cover_path = generate_cover('AI前沿日报', f'{today} 每日AI热点追踪', f'output/cover-{today}.png')
 thumb_id = wx.upload_thumb_media(cover_path)
 
-# 读取报告生成HTML
+# 读取报告
 with open(f'output/ai-news-{today}.md') as f:
     md = f.read()
-html = markdown_to_wechat_html(md)
+
+# 生成并上传图表
+charts = generate_charts(md, 'output')
+chart_images = []
+for path, caption in charts:
+    url = wx.upload_image_media(path)
+    if url:
+        chart_images.append((url, caption))
+
+# 生成HTML（带图表插入）
+html = markdown_to_wechat_html(md, chart_images=chart_images)
 with open(f'output/ai-news-{today}.html', 'w') as f:
     f.write(html)
 

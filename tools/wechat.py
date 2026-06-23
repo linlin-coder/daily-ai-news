@@ -76,6 +76,34 @@ class WeChatAPI:
             print(f"[wechat] Thumb upload failed: {data}")
             return None
 
+    def upload_image_media(self, image_path):
+        """上传文章内图片，返回可用于正文的 URL"""
+        token = self.get_access_token()
+        url = f"https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token={token}"
+
+        with open(image_path, "rb") as f:
+            file_data = f.read()
+
+        boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+        body = (
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="media"; filename="chart.png"\r\n'
+            f"Content-Type: image/png\r\n\r\n"
+        ).encode("utf-8") + file_data + f"\r\n--{boundary}--\r\n".encode("utf-8")
+
+        req = Request(url, data=body, headers={
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+            "User-Agent": "DailyAINews/1.0",
+        })
+        with urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        if "url" in data:
+            return data["url"]
+        else:
+            print(f"[wechat] Image upload failed: {data}")
+            return None
+
     def create_draft(self, title, author, digest, content, thumb_media_id=""):
         """创建草稿（不发布）"""
         token = self.get_access_token()
