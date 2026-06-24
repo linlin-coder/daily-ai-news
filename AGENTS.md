@@ -210,9 +210,58 @@ print(f'Draft: {media_id}')
 "
 ```
 
+### Step 8: 保存数据到 SQLite
+
+将当天报告、文章、图表信息写入数据库，便于历史查询和趋势分析：
+
+```bash
+cd /root/RD/daily_skill_notify/daily_ai_news
+python3.12 -c "
+import sys, re, os; sys.path.insert(0, 'tools')
+from db import save_report, save_articles, save_charts
+from datetime import datetime
+
+today = datetime.now().strftime('%Y-%m-%d')
+
+# 读取 md 提取文章信息
+with open(f'output/ai-news-{today}.md') as f:
+    md = f.read()
+
+# 提取文章
+articles = []
+for m in re.finditer(r'###\s+\d+\.\s+(.*?)\n(.*?)(?=###|\n##|\Z)', md, re.DOTALL):
+    title = m.group(1).strip()
+    body = m.group(2).strip()
+    score_m = re.search(r'热度[：:]\s*(\d+)分', body)
+    comments_m = re.search(r'(\d+)条评论', body)
+    source_m = re.search(r'来源[：:]\s*(.*?)[\s|]', body)
+    articles.append({
+        'title': title,
+        'score': int(score_m.group(1)) if score_m else 0,
+        'comments': int(comments_m.group(1)) if comments_m else 0,
+        'source': source_m.group(1).strip() if source_m else '',
+    })
+
+# 提取摘要
+digest_m = re.search(r'digest=[\"\'](.*?)[\"\']', os.popen('cat output/ai-news-*.html 2>/dev/null').read())
+digest = digest_m.group(1) if digest_m else ''
+
+# 保存
+report_id = save_report(
+    date=today,
+    title=f'AI前沿日报 | {today}',
+    digest=digest,
+    cover_path=f'output/cover-{today}.png',
+    article_count=len(articles),
+)
+save_articles(report_id, articles)
+print(f'Saved: report_id={report_id}, {len(articles)} articles')
+"
+```
+
 ## 配置
 
-- 微信配置: `tools/config.py` 从 `../DailyArticlePush/pipeline.config.yaml` 读取
+- 微信配置: `tools/config.py` 从项目根目录 `.env` 读取 WECHAT_APPID / WECHAT_APPSECRET
 - `.env` 已配置 WECHAT_APPID / WECHAT_APPSECRET
 
 ## 注意事项

@@ -3,8 +3,7 @@
   "permission": {
     "external_directory": {
       "/root/.agents/skills/**": "allow",
-      "/root/.claude/skills/**": "allow",
-      "/root/RD/daily_skill_notify/DailyArticlePush/**": "allow"
+      "/root/.claude/skills/**": "allow"
     },
     "read": { ".env": "allow", "**/.env": "allow" }
   }
