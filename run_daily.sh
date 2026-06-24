@@ -17,6 +17,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Daily AI News cron start"
 echo "=========================================="
 
 export LAST30DAYS_MEMORY_DIR="${PROJECT_DIR}/output"
+export PATH="/root/.nvm/versions/node/v24.13.0/bin:$PATH"
 
 # opencode run 驱动 agent 执行 AGENTS.md 中的完整流程
 opencode run "$(cat AGENTS.md)" --dir "${PROJECT_DIR}"
