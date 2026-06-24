@@ -5,6 +5,7 @@
       "/root/.agents/skills/**": "allow",
       "/root/.claude/skills/**": "allow",
       "/root/RD/daily_skill_notify/DailyArticlePush/**": "allow"
-    }
+    },
+    "read": { ".env": "allow", "**/.env": "allow" }
   }
 }
