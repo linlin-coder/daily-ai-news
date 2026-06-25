@@ -13,76 +13,96 @@ from urllib.request import urlopen, Request
 from urllib.parse import quote
 
 
-# 主题 → 视觉元素映射表
+# 主题 → 视觉元素映射表（强调差异化，避免千篇一律的人脸）
 VISUAL_MAP = {
     # AI 产品/模型
-    "gemini": "Google Gemini holographic AI interface",
-    "gpt": "OpenAI GPT neural glowing orb",
-    "claude": "Anthropic Claude AI mind visualization",
-    "chatgpt": "ChatGPT conversation hologram",
-    "llm": "massive language model brain neural network",
-    "大模型": "massive language model brain neural network",
-    "语言模型": "massive language model brain neural network",
+    "gemini": "glowing Google Gemini crystal orb floating in dark space with light rays",
+    "gpt": "massive glowing GPT text stream flowing through digital void",
+    "claude": "ethereal Claude AI consciousness expanding into geometric patterns",
+    "chatgpt": "conversation bubbles transforming into holographic knowledge graph",
+    "llm": "towering neural network architecture with cascading data streams",
+    "大模型": "towering neural network architecture with cascading data streams",
+    "语言模型": "towering neural network architecture with cascading data streams",
 
     # AI Agent / 自动化
-    "agent": "autonomous AI agent robot city hologram",
-    "自动化": "digital automation workflow robot arms",
+    "agent": "autonomous robot hand reaching for floating digital task icons in space",
+    "自动化": "chain of dominoes falling with digital sparks and automation symbols",
 
     # 隐私/安全
-    "隐私": "digital privacy eye surveillance data breach",
-    "安全": "cybersecurity shield digital threat warning",
-    "监控": "surveillance camera digital eye data stream",
-    "数据泄露": "data breach flowing numbers red alert",
+    "隐私": "shattered glass screen revealing digital surveillance eye behind it",
+    "安全": "glowing cybersecurity shield deflecting red digital attacks",
+    "监控": "wall of surveillance camera lenses with red laser scanning beams",
+    "数据泄露": "cracked server tower leaking glowing data streams into darkness",
 
     # 欺诈/滥用
-    "欺诈": "digital fraud fake identity dark web scam",
-    "诈骗": "scam call center dark digital crime",
-    "深度伪造": "deepfake face morphing digital distortion",
-    "deepfake": "deepfake face morphing digital distortion",
-    "假": "fake vs real digital comparison split",
+    "欺诈": "split screen showing real human face vs AI generated fake face",
+    "诈骗": "phone screen displaying scam call with warning symbols flashing",
+    "深度伪造": "face being digitally reconstructed pixel by pixel in real time",
+    "deepfake": "face being digitally reconstructed pixel by pixel in real time",
+    "假": "two identical human figures one made of light one made of pixels",
 
     # 医疗/生物
-    "医疗": "medical AI doctor hologram futuristic scan",
-    "药物": "molecular drug discovery glowing capsule lab",
-    "蛋白质": "protein folding 3D structure biology",
-    "基因": "DNA double helix genome sequencing light",
-    "生物": "biotech molecular biology lab futuristic",
-    "健康": "healthcare AI wearable digital heartbeat",
+    "医疗": "holographic DNA double helix floating above futuristic medical scanner",
+    "药物": "molecular capsule dissolving into glowing therapeutic particles",
+    "蛋白质": "intricate protein folding 3D structure glowing in blue light",
+    "基因": "DNA sequencing gel with glowing bands reading genetic code",
+    "生物": "petri dish with glowing cell divisions under futuristic microscope",
+    "健康": "digital heartbeat line transforming into healthy organ hologram",
 
     # 芯片/硬件
-    "芯片": "glowing semiconductor chip neon circuits",
-    "gpu": "GPU server room neon glow computing",
-    "算力": "supercomputing data center power glow",
+    "芯片": "macro shot of GPU chip die with neon circuits firing data pulses",
+    "gpu": "server rack filled with glowing GPUs connected by laser links",
+    "算力": "massive data center corridor with rows of pulsing compute nodes",
 
     # 开源
-    "开源": "open source code terminal developer matrix",
-    "github": "GitHub code repository developer workspace",
+    "开源": "code editor window exploding into collaborative global developer network",
+    "github": "GitHub contribution graph transforming into glowing world map",
 
     # 机器人
-    "机器人": "humanoid robot chrome metallic future city",
-    "具身": "embodied AI robot physical world interaction",
+    "机器人": "humanoid robot hand and human hand reaching toward each other in space",
+    "具身": "robot interacting with physical objects in a real kitchen environment",
 
     # 自动驾驶
-    "自动驾驶": "self-driving car AI sensor fusion city",
-    "无人": "drone autonomous delivery urban sky",
+    "自动驾驶": "self-driving car sensor fusion visualization with LiDAR point cloud",
+    "无人": "fleet of delivery drones flying formation over futuristic city at night",
 
     # 伦理/社会
-    "伦理": "AI ethics balance scale philosophy mind",
-    "偏见": "AI bias fairness balance digital scales",
-    "就业": "human robot workplace future office",
-    "教育": "AI education classroom futuristic learning",
+    "伦理": "ancient scales of justice weighing human brain vs computer chip",
+    "偏见": "mirrored faces splitting into biased red and blue halves",
+    "就业": "human worker and robot arm collaborating at same workbench",
+    "教育": "students in classroom with floating holographic AI tutor",
 
     # 投资/商业
-    "融资": "startup funding rocket growth chart",
-    "市值": "stock market chart AI company growth",
-    "裁员": "layoff office empty desk technology crisis",
+    "融资": "rocket ship launching from laptop screen trailing stock chart upward",
+    "市值": "massive golden bull statue made of circuit boards and coins",
+    "裁员": "empty office desk with abandoned computer screen showing layoff email",
 
     # 写作/创作
-    "写作": "AI writing pen paper future creative",
-    "创作": "digital art creation AI canvas futuristic",
-    "图像": "AI image generation pixel art explosion",
-    "视频": "AI video generation cinematic reel",
+    "写作": "fountain pen tip dripping glowing ink that forms digital words",
+    "创作": "artist palette exploding with AI-generated surreal dreamscapes",
+    "图像": "photo camera lens splitting into kaleidoscope of AI-generated art styles",
+    "视频": "film reel unwinding into holographic movie scenes in mid-air",
+
+    # 国家安全（敏感话题，用视觉化表达）
+    "国家安全": "digital globe with encrypted data streams orbiting around it",
+    "情报": "encrypted message symbols floating in dark digital space",
+    "政府": "government building silhouette made of binary code and data streams",
 }
+
+
+def _fetch_image(url):
+    """带重试的图片下载"""
+    import time
+    req = Request(url, headers={"User-Agent": "DailyAINews/1.0"})
+    for attempt in range(3):
+        try:
+            with urlopen(req, timeout=60) as resp:
+                return resp.read()
+        except Exception as e:
+            print(f"[cover] Attempt {attempt+1} failed: {e}")
+            if attempt == 2:
+                raise
+            time.sleep(3)
 
 
 def generate_cover(title, subtitle="", output_path="/tmp/cover.png"):
@@ -93,10 +113,7 @@ def generate_cover(title, subtitle="", output_path="/tmp/cover.png"):
     url = f"https://image.pollinations.ai/prompt/{quote(prompt)}?width=900&height=383&seed={seed}&nologo=true"
 
     print(f"[cover] Generating: {prompt[:100]}...")
-
-    req = Request(url, headers={"User-Agent": "DailyAINews/1.0"})
-    with urlopen(req, timeout=60) as resp:
-        data = resp.read()
+    data = _fetch_image(url)
 
     with open(output_path, "wb") as f:
         f.write(data)
@@ -119,9 +136,7 @@ def generate_cover_from_md(md_content, output_path="/tmp/cover.png"):
     print(f"[cover] Topics: {topics}")
     print(f"[cover] Generating: {prompt[:100]}...")
 
-    req = Request(url, headers={"User-Agent": "DailyAINews/1.0"})
-    with urlopen(req, timeout=60) as resp:
-        data = resp.read()
+    data = _fetch_image(url)
 
     with open(output_path, "wb") as f:
         f.write(data)
@@ -177,14 +192,21 @@ def build_prompt_from_topics(topics):
 
 
 def _compose_prompt(elements):
-    """组合最终的图片生成 prompt"""
-    elements_str = " ".join(elements)
+    """组合最终的图片生成 prompt — 简短有力，避免 API 报错"""
+    import random
+    elements_str = " ".join(elements[:2])  # 最多2个元素，控制长度
+
+    # 随机构图
+    comps = [
+        "dramatic close-up", "wide cinematic view", "floating in dark void",
+        "exploding burst of light", "abstract geometric composition",
+    ]
+    comp = random.choice(comps)
+
     return (
-        f"Eye-catching technology magazine cover illustration, {elements_str}, "
-        f"vibrant neon blue and magenta gradient, dramatic cinematic lighting, "
-        f"abstract geometric shapes floating, holographic digital effect, "
-        f"no text no letters no words no watermark no logo, "
-        f"professional 4K ultra detailed, trending on artstation, concept art"
+        f"Technology magazine cover, {comp}, {elements_str}, "
+        f"neon blue magenta gradient, holographic effect, "
+        f"no text no letters, 4K concept art"
     )
 
 
