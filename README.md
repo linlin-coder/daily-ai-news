@@ -17,29 +17,108 @@ cron (每天06:00)
     → 保存数据到 SQLite
 ```
 
+## 依赖安装
+
+### 1. 运行时环境
+
+```bash
+# Python 3.12+
+python3 --version  # 需要 3.12+
+
+# Node.js (opencode 依赖)
+# 推荐使用 nvm 安装
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+source ~/.bashrc
+nvm install 24
+node --version  # 需要 18+
+```
+
+### 2. opencode
+
+```bash
+npm install -g opencode
+opencode --version
+```
+
+文档: https://opencode.ai
+
+### 3. last30days skill
+
+```bash
+# 克隆 skill 到 ~/.agents/skills/
+mkdir -p ~/.agents/skills
+git clone https://github.com/mvanhorn/last30days-skill.git ~/.agents/skills/last30days
+```
+
+文档: https://github.com/mvanhorn/last30days-skill
+
+### 4. Python 依赖
+
+```bash
+pip install matplotlib numpy Pillow
+```
+
+| 包 | 用途 |
+|---|------|
+| `matplotlib` | 数据图表生成 |
+| `numpy` | 数值计算 |
+| `Pillow` | 图片处理 |
+
+> `sqlite3` 为 Python 内置模块，无需额外安装。
+
+### 5. 系统字体（中文图表）
+
+```bash
+# Ubuntu/Debian
+apt install fonts-wqy-zenhei
+
+# CentOS/RHEL
+yum install wqy-zenhei-fonts
+```
+
+## 项目配置
+
+### 环境变量
+
+在项目根目录创建 `.env` 文件：
+
+```bash
+cd daily_ai_news
+cat > .env << 'EOF'
+WECHAT_APPID=你的公众号AppID
+WECHAT_APPSECRET=你的公众号AppSecret
+EOF
+```
+
+### 微信公众号设置
+
+1. 登录 [微信公众平台](https://mp.weixin.qq.com)
+2. 开发 → 基本配置 → IP白名单 → 添加: `你的服务器IP`
+3. 开发 → 基本配置 → 获取 AppID 和 AppSecret
+
+### opencode 权限
+
+项目已包含 `opencode.json`，配置了访问 skills 目录的权限，无需额外设置。
+
+### 定时任务
+
+```bash
+# 添加到 crontab（每天早上6点执行）
+crontab -e
+# 添加这行：
+0 6 * * * /root/RD/daily_skill_notify/daily_ai_news/run_daily.sh
+```
+
 ## 手动执行
 
 ```bash
 # 完整流程（推荐）
-bash /root/RD/daily_skill_notify/daily_ai_news/run_daily.sh
+bash run_daily.sh
 
 # 或直接 opencode run
-cd /root/RD/daily_skill_notify/daily_ai_news
+cd daily_ai_news
 opencode run "$(cat AGENTS.md)" --dir "$(pwd)"
 ```
-
-## 配置
-
-配置从项目根目录 `.env` 文件读取：
-
-```
-WECHAT_APPID=...
-WECHAT_APPSECRET=...
-```
-
-### IP白名单
-
-微信公众号后台 → 开发 → 基本配置 → IP白名单 → 添加: `211.159.179.85`
 
 ## 文件结构
 
@@ -50,6 +129,8 @@ daily_ai_news/
 ├── opencode.json       # opencode 权限配置
 ├── .env                # 微信配置（不入 git）
 ├── .gitignore
+├── LICENSE             # MIT
+├── README.md
 ├── tools/
 │   ├── config.py       # .env 配置加载
 │   ├── wechat.py       # 微信公众号 API
@@ -58,8 +139,8 @@ daily_ai_news/
 │   ├── chart.py        # matplotlib 数据图表
 │   └── db.py           # SQLite 数据存储
 ├── data/               # SQLite 数据库（不入 git）
-├── output/             # 报告、图表、封面
-└── logs/               # 运行日志
+├── output/             # 报告、图表、封面（不入 git）
+└── logs/               # 运行日志（不入 git）
 ```
 
 ## 数据源
@@ -67,3 +148,7 @@ daily_ai_news/
 - **last30days skill** — 综合采集 Hacker News / GitHub / Web
 - 政治敏感内容自动过滤
 - 数据自动存入 SQLite 便于历史查询
+
+## License
+
+MIT
