@@ -192,11 +192,10 @@ def build_prompt_from_topics(topics):
 
 
 def _compose_prompt(elements):
-    """组合最终的图片生成 prompt — 简短有力，避免 API 报错"""
+    """组合最终的图片生成 prompt — 明确排除人脸"""
     import random
-    elements_str = " ".join(elements[:2])  # 最多2个元素，控制长度
+    elements_str = " ".join(elements[:2])
 
-    # 随机构图
     comps = [
         "dramatic close-up", "wide cinematic view", "floating in dark void",
         "exploding burst of light", "abstract geometric composition",
@@ -206,7 +205,8 @@ def _compose_prompt(elements):
     return (
         f"Technology magazine cover, {comp}, {elements_str}, "
         f"neon blue magenta gradient, holographic effect, "
-        f"no text no letters, 4K concept art"
+        f"no text no letters no face no person no human no portrait, "
+        f"4K concept art"
     )
 
 
