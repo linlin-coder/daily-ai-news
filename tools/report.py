@@ -176,13 +176,24 @@ def markdown_to_wechat_html(md_content, chart_images=None):
     if in_card:
         parts.append('</section>')
 
-    # ===== 底部 =====
+    # ===== 底部互动区 =====
     parts.append('''
 <section style="margin:36px 0 0;">
   <section style="height:2px;background:linear-gradient(90deg,transparent,#3a7bd5,transparent);border-radius:1px;margin-bottom:24px;"></section>
-  <section style="text-align:center;padding:24px 16px;background:linear-gradient(135deg,#f8f9ff,#f0f4ff);border-radius:14px;">
-    <section style="font-size:11px;color:#aaa;letter-spacing:3px;margin-bottom:4px;">LAST30DAYS · DAILY AI INTELLIGENCE</section>
-    <section style="font-size:11px;color:#ccc;">Hacker News · GitHub · AI 自动综合分析</section>
+
+  <section style="padding:20px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:14px;text-align:center;">
+    <section style="font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;">今日互动</section>
+    <section style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;">你觉得今天哪条AI新闻最值得关注？<br/>评论区聊聊你的看法 👇</section>
+  </section>
+
+  <section style="margin:20px 0;padding:16px;background:#fff;border-radius:12px;border:1px solid #eee;text-align:center;">
+    <section style="font-size:14px;color:#666;margin-bottom:8px;">觉得有用？点个「在看」让更多人看到</section>
+    <section style="font-size:20px;">🔥</section>
+  </section>
+
+  <section style="text-align:center;padding:16px;">
+    <section style="font-size:11px;color:#bbb;letter-spacing:3px;">LAST30DAYS · DAILY AI INTELLIGENCE</section>
+    <section style="font-size:11px;color:#ccc;margin-top:4px;">Hacker News · GitHub · AI 自动综合分析</section>
   </section>
 </section>''')
 
