@@ -161,26 +161,24 @@ ls -t output/*raw*.md | head -1
 
 ### Step 5: 生成封面图并上传
 
-封面图必须与文章内容强相关，用文章中最劲爆的那条新闻的关键词生成：
+从当天的报告内容中提取核心主题，自动生成与内容强相关的封面图：
 
 ```bash
 cd /root/RD/daily_skill_notify/daily_ai_news
 python3.12 -c "
 import sys; sys.path.insert(0, 'tools')
-from cover import generate_cover
-cover_path = generate_cover(
-    '今天最劲爆的那条新闻标题关键词',
-    '副标题关键词1 · 关键词2',
-    'output/cover-YYYY-MM-DD.png'
-)
+from cover import generate_cover_from_md
+from datetime import datetime
+
+today = datetime.now().strftime('%Y-%m-%d')
+with open(f'output/ai-news-{today}.md') as f:
+    md = f.read()
+
+# 从报告内容中提取当天最劲爆的关键词生成封面
+cover_path = generate_cover_from_md(md, f'output/cover-{today}.png')
 print(f'Cover: {cover_path}')
 "
 ```
-
-**封面原则**：
-- 用文章中最吸引眼球的那条新闻的关键词
-- 不要用"AI前沿日报"这种泛词
-- 生成的图要有视觉冲击力，能吸引点击
 
 ### Step 6: 生成数据图表并上传（仅当文章包含数据时）
 
@@ -232,7 +230,7 @@ python3.12 -c "
 import sys; sys.path.insert(0, 'tools')
 from config import load_env
 from wechat import WeChatAPI
-from cover import generate_cover
+from cover import generate_cover_from_md
 from chart import generate_charts
 from report import markdown_to_wechat_html
 from datetime import datetime
@@ -241,13 +239,13 @@ load_env()
 wx = WeChatAPI()
 today = datetime.now().strftime('%Y-%m-%d')
 
-# 生成封面（用今天最劲爆的新闻关键词）
-cover_path = generate_cover('今天最劲爆的新闻关键词', '副标题', f'output/cover-{today}.png')
-thumb_id = wx.upload_thumb_media(cover_path)
-
 # 读取报告
 with open(f'output/ai-news-{today}.md') as f:
     md = f.read()
+
+# 从报告内容生成封面（自动提取当天最劲爆的关键词）
+cover_path = generate_cover_from_md(md, f'output/cover-{today}.png')
+thumb_id = wx.upload_thumb_media(cover_path)
 
 # 生成并上传图表
 charts = generate_charts(md, 'output')
