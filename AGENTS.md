@@ -60,30 +60,31 @@ ls -t output/*raw*.md | head -1
 cd /root/RD/daily_skill_notify/daily_ai_news
 python3.12 -c "
 import sys; sys.path.insert(0, 'tools')
-from db import get_recent_article_titles, get_recent_article_keywords, is_duplicate
+from db import get_recent_article_titles
 
-# 查看最近7天已覆盖的内容
 titles = get_recent_article_titles(7)
-print(f'已覆盖 {len(titles)} 篇文章:')
+print(f'最近7天已覆盖 {len(titles)} 篇:')
 for t in titles:
     print(f'  - {t}')
-
-# 查看提取到的关键词
-keywords = get_recent_article_keywords(7)
-print(f'\n去重关键词 ({len(keywords)}个): {keywords}')
 "
 ```
 
-**在生成报告时，对每条候选内容执行去重检查**：
-1. 读取数据库中最近 7 天的文章标题
-2. 对每条候选内容的标题做 `is_duplicate()` 检查
-3. 如果标题与已覆盖内容高度相似（包含 2 个以上相同关键词），跳过该条
-4. 优先选择新鲜的、未覆盖过的内容
-5. 如果去重后剩余内容不足 3 条，降低去重阈值或扩大搜索范围
+**去重方式：由你（LLM）自己判断语义重复**，不要调用任何函数。
+
+拿到上面输出的历史标题列表后，对今天采集的每条内容，你自己判断：
+- 这条内容和历史标题是否讲的是**同一件事**？
+- 如果是同一件事（换个角度/换个说法），跳过
+- 如果是全新的事件，保留
+
+**判断标准**：
+- ✅ 重复：Anthropic指控Alibaba偷Claude ← 历史已有"Anthropic公开指控Alibaba：2900万次操作偷学Claude"
+- ✅ 重复：Google Gemini Spark体验 ← 历史已有"Gemini Spark是迄今为止最令人印象深刻且可怕的AI体验"
+- ❌ 新鲜：DeepSeek-V4-Flash-DSpark ← 全新模型发布
+- ❌ 新鲜：Trump允许Anthropic发布Mythos ← 全新事件
 
 **去重原则**：
 - 同一事件最多覆盖 1 次（换个角度写也不行）
-- 标题包含 2 个以上相同关键词视为重复
+- 由你判断语义是否相同，不要只看字面
 - 优先新鲜度：7天内的内容标记为"已覆盖"，14天以上的可重新覆盖（但要换角度）
 
 ### Step 4: 深度分析生成中文报告
