@@ -1,9 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/mimo-v2.5-free",
   "permission": {
     "external_directory": {
       "/root/.agents/skills/**": "allow",
-      "/root/.claude/skills/**": "allow"
+      "/root/.claude/skills/**": "allow",
+      "/tmp/*": "allow"
     },
     "read": { ".env": "allow", "**/.env": "allow" }
   }
