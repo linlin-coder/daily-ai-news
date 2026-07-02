@@ -62,8 +62,30 @@ def markdown_to_wechat_html(md_content, chart_images=None):
     ]
 
     charts_inserted = False
+    in_code_block = False
+    code_lines = []
     for line in lines:
         s = line.strip()
+
+        # 代码块处理
+        if s.startswith("```"):
+            if in_code_block:
+                # 结束代码块
+                code_content = "\n".join(code_lines)
+                parts.append(f'''
+<section style="margin:16px 0;padding:16px;background:#1e1e1e;border-radius:10px;overflow-x:auto;">
+  <pre style="margin:0;padding:0;font-size:13px;color:#d4d4d4;font-family:Consolas,'Courier New',monospace;line-height:1.6;white-space:pre-wrap;word-break:break-all;">{code_content}</pre>
+</section>''')
+                code_lines = []
+                in_code_block = False
+            else:
+                # 开始代码块
+                in_code_block = True
+            continue
+
+        if in_code_block:
+            code_lines.append(line.rstrip())
+            continue
 
         # 跳过头部元信息
         if skip_header:
