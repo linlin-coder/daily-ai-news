@@ -525,7 +525,7 @@ digest_match = re.search(r'\*\*摘要\*\*[：:]\s*(.+)', md)
 digest = digest_match.group(1).strip() if digest_match else '今天AI圈发生了几件大事'
 
 media_id = wx.create_draft(
-    title=title, author='AI日报',
+    title=title, author='不二小张',
     digest=digest, content=html,
     thumb_media_id=thumb_id
 )
